@@ -1,0 +1,103 @@
+lastDrawX = 0
+lastDrawY = 0
+firstDraw = true
+ratio = 0
+
+bs_setmode(1)
+
+function draw_hole(limite, base, r)
+  local l = math.random(-r, r)
+  local c = math.random(-r, r)
+  local rand = 3
+
+  local relativex = -base + l
+  local relativey = c
+
+  bs_polygon(relativex, c)
+  for i = 1, 5, 1
+  do 
+    bs_polygon(relativex + (2 * i), c + math.random(-rand, rand))
+  end
+
+  bs_polygon(l, c)
+  for i = 1, 5, 1
+  do 
+    bs_polygon(l + math.random(-rand, rand), c - (2 * i))
+  end
+
+  local relativey = -base + c
+  bs_polygon(l, relativey)
+  for i = 1, 5, 1
+  do 
+    bs_polygon(relativex - (2 * i), relativey + math.random(-rand, rand))
+  end
+  
+  relativex = -base + l
+  relativey = -base + c
+  bs_polygon(relativex, relativey)
+  --if math.random(0, 1) then
+    --relativey = relativex
+  --end
+  for i = 1, 5, 1
+  do 
+    bs_polygon(relativex + math.random(-rand, rand), relativey + (2 * i))
+  end
+
+  bs_polygon(-base + l, c)
+end
+
+function draw_hexagon(w, x, y, p)
+  local base = w/2
+  bs_polygon(base, -base)
+  bs_polygon(base, base)
+  bs_polygon(-base, base)
+  bs_polygon(-base, -1)
+  
+  draw_hole(0 , 10, base)
+
+  bs_polygon(-base, -1)
+  bs_polygon(-base, -base)
+  bs_polygon(-base + 1, -base)
+
+
+  local dx, dy = bs_dir()
+  local rotation = bs_atan(dx, dy)
+  local r, g, b = bs_fore()
+  local opacity = bs_opaque() * 255
+
+  bs_polygon_rotate(rotation)
+  --bs_polygon_mul(1, 1)
+
+  bs_polygon_move(x, y)
+  
+  op = math.floor(200 * p)
+  bs_fill(r, g, b, op)
+end
+
+function param1 ()
+  return "espaçamento", 1, 100, 75
+end
+
+function  default_size()
+  return   100, 0.25
+end
+
+function main(x, y, p)
+  local width = bs_width()
+  local updateDist = (width * bs_param1()) / 100
+
+  if not firstDraw then
+    local distance = bs_distance(lastDrawX - x, lastDrawY - y)
+    if distance < updateDist then
+      return 0
+    end
+  end
+
+  draw_hexagon(width, x, y, p)
+
+  lastDrawX = x
+  lastDrawY = y
+  firstDraw = false
+
+  return 1
+end
