@@ -4,12 +4,30 @@ firstDraw = true
 ratio = 0
 lista = {}
 angle = 0
-type = 0
 
 --bs_setmode(1)
 
 function  default_size()
   return   100, 0.25
+end
+
+function ponta(x, y, r, g, b, o, w)
+  local bx = w/4
+  local by = w/2
+  local num = 3
+  for i = 1, num, 1
+  do
+    bs_polygon(bx, -by)
+    coluna(bx, -by, by)
+    bs_polygon(bx, by)
+    linha(bx, -bx, by)
+    bs_polygon(-bx, by)
+    coluna(-bx, by, -by)
+    bs_polygon(-bx, -by)
+    linha(-bx, bx, -by)
+    bs_polygon_move(x, y)
+    bs_fill(r, g, b, o/2)
+  end
 end
 
 function last(x, y, p)
@@ -18,13 +36,47 @@ function last(x, y, p)
   local basey = width/2
   local r, g, b = bs_fore()
   local opacity = bs_opaque() * 255 * p
-  bs_polygon(basex, -basey)
-  bs_polygon(basex, basey)
-  bs_polygon(-basex, basey)
-  bs_polygon(-basex, -basey)
-  bs_polygon_move(lastDrawX, lastDrawY)
-  bs_fill(r, g, b, opacity)
-  firstDraw = true
+  ponta(lastDrawX, lastDrawY, r, g, b, opacity, width)
+  --firstDraw = true
+  return 1
+end
+
+function coluna(x, y1, y2)
+  local plus = 2
+  local ratio = 5
+  local ratioy = 3
+  local t = y2 - y1
+  if t < 0 then
+    plus = -plus
+  end
+  for i = y1, y2, plus
+  do
+    bs_polygon(x + math.random(-ratio, ratio), i + math.random(-ratio, ratio))
+  end
+end
+
+function linha(x1, x2, y)
+  local plus = 2
+  local ratio = 5
+  local ratioy = 3
+  local t = x2 - x1
+  local g = x1 + (t/2)
+  if t < 0 then
+    plus = -plus
+  end
+  for i = x1, g, plus
+  do
+    bs_polygon(i + math.random(-ratio, ratio), y + math.random(-ratioy, ratioy))
+  end
+
+  coluna(g, y, 0)
+  local u = g + plus
+  coluna(u, 0, y)
+
+  for i = u, x2, plus
+  do
+    bs_polygon(i + math.random(-ratio, ratio), y + math.random(-ratioy, ratioy))
+  end
 end
 
 function main(x, y, p)
@@ -37,7 +89,6 @@ function main(x, y, p)
   local base = width/2
   local basex = width/4
   local basey = width/2
-  local signal = 1
 
   if not firstDraw then
     local distance = bs_distance(lastDrawX - x, lastDrawY - y)
@@ -45,16 +96,10 @@ function main(x, y, p)
       return 0
     end
   else
+    ponta(x, y, r, g, b, opacity, width)
+    firstDraw = false
     lastDrawX = x
     lastDrawY = y
-    bs_polygon(basex, -basey)
-    bs_polygon(basex, basey)
-    bs_polygon(-basex, basey)
-    bs_polygon(-basex, -basey)
-    bs_polygon_move(x, y)
-    bs_fill(r, g, b, bs_opaque() * 255)
-    --bs_ellipse(x, y, width, width, 0, 0, 0, 0, 255)
-    firstDraw = false
     return 1
   end
  
@@ -64,15 +109,14 @@ function main(x, y, p)
   local dx, dy = bs_dir()
   local rotation = bs_atan(dx, dy)
   local teste = rotation * angle
-
+  --[[
+  if rotation == 0 then
+    ponta(lastDrawX, lastDrawY,0,0,0, opacity, width)
+  end
+  ]]--
   if teste < 0 then
     if angle > 0 and rotation < 0 then
-      bs_polygon(basex, -basey)
-      bs_polygon(basex, basey)
-      bs_polygon(-basex, basey)
-      bs_polygon(-basex, -basey)
-      bs_polygon_move(lastDrawX, lastDrawY)
-      bs_fill(r, g, b, opacity)
+      ponta(lastDrawX, lastDrawY, r, g, b, opacity, width)
     else
       lastDrawX = x
       lastDrawY = y
@@ -81,53 +125,56 @@ function main(x, y, p)
       return 1
     end 
   end
-  --[[if rotation > 0 then
-    signal = -1
-  end--]]
 
   angle = rotation
-
-  if rotation <= -1.57 or (rotation >= 0 and rotation <= 1.57) then
-    --1
-    bs_polygon(basex, -basey)
-    bs_polygon(basex + ax, -basey + ay)
-    --2
-    bs_polygon((-basex * signal) + ax, (-basey * signal) + ay)
-    --3
-    bs_polygon(-basex + ax, basey + ay)
-    bs_polygon(-basex, basey)
-    --4
-    bs_polygon(-basex * signal, -basey * signal)
-  else
-    --1
-    bs_polygon(basex * signal, -basey * signal)
-    --2
-    bs_polygon(basex, basey)
-    bs_polygon(basex + ax, basey + ay)
-    --3
-
-    bs_polygon((basex * signal) + ax, (-basey * signal) + ay)
-    --4
-    bs_polygon(-basex + ax, -basey + ay)
-    bs_polygon(-basex, -basey)
-  end
-
-  bs_polygon_move(x, y)
-  
-  --bs_fill(r, g, b, opacity)
-  if rotation <= -1.57 or (rotation >= 0 and rotation <= 1.57) then
-    --bs_fill(0, 0, 0, opacity)
-    if rotation > 0 then
-      bs_fill(255, 0, 0, opacity)
-    else
-      bs_fill(0, 255, 0, opacity)
-      end
-  else
-    bs_fill(255, 255, 255, opacity)
-  end
+  draw_middle(x, y, ax, ay, r, g, b, opacity, basex, basey, rotation)
 
   lastDrawX = x
   lastDrawY = y
   firstDraw = false
   return 1
+end
+
+function draw_middle(x, y, dx, dy, r, g, b, o, basex, basey, rotation)
+  if rotation <= -1.57 or (rotation >= 0 and rotation <= 1.57) then
+    bs_polygon(basex, -basey)
+
+    bs_polygon(basex + dx, -basey + dy)
+
+    linha(basex + dx, -basex + dx, -basey + dy)
+
+    --bs_polygon(-basex + dx, -basey + dy)
+
+    coluna(-basex + dx, -basey + dy, basey + dy)
+    
+    bs_polygon(-basex + dx, basey + dy)
+
+    bs_polygon(-basex, basey)
+
+    coluna(-basex, basey, -basey)
+    
+    --bs_polygon(-basex, -basey)
+
+    linha(-basex, basex, -basey)
+  else
+    bs_polygon(basex, -basey)
+
+    coluna(basex, -basey, basey)
+
+    bs_polygon(basex, basey)
+    bs_polygon(basex + dx, basey + dy)
+
+    coluna(basex + dx, basey + dy, -basey + dy)
+
+    --bs_polygon(basex + dx, -basey + dy)
+    
+    linha(basex + dx, -basex + dx, -basey + dy)
+
+    bs_polygon(-basex + dx, -basey + dy)
+    --bs_polygon(-basex, -basey)
+
+    linha(-basex, basex, -basey)
+  end
+  bs_polygon_move(x, y)
+  bs_fill(r, g, b, o)
 end
