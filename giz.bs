@@ -30,19 +30,8 @@ function ponta(x, y, r, g, b, o, w)
   end
 end
 
-function last(x, y, p)
-  local width = bs_width()
-  local basex = width/4
-  local basey = width/2
-  local r, g, b = bs_fore()
-  local opacity = bs_opaque() * 255 * p
-  ponta(lastDrawX, lastDrawY, r, g, b, opacity, width)
-  --firstDraw = true
-  return 1
-end
-
 function coluna(x, y1, y2)
-  local plus = 2
+  --[[local plus = 2
   local ratio = 10
   local ratioy = 3
   local t = y2 - y1
@@ -57,6 +46,22 @@ function coluna(x, y1, y2)
     bs_polygon(x + desviox, i + desvioy)
     if math.random(0, 1) == 1 then
       bs_polygon(x + desviox, i - plus + desvioy)
+    end
+  end]]--
+  local signal = 1
+  local t = y2 - y1
+  local  v = math.floor(t/10)
+  if t < 0 then
+    signal = -signal
+  end
+  local recou = signal * 10
+  local l = x
+  for i = y1, y2 - recou, recou
+  do
+    for j = 1, 5, 1
+    do
+      l = l + math.random(-1, 1)
+      bs_polygon(l, i + j * 2 * signal)
     end
   end
 end
@@ -161,6 +166,17 @@ function draw_middle(x, y, dx, dy, r, g, b, o, basex, basey, rotation)
     bs_polygon_move(x, y)
     bs_fill(r, g, b, o/e)
   end
+end
+
+function last(x, y, p)
+  local width = bs_width()
+  local basex = width/4
+  local basey = width/2
+  local r, g, b = bs_fore()
+  local opacity = bs_opaque() * 255 * p
+  ponta(lastDrawX, lastDrawY, r, g, b, opacity, width)
+  firstDraw = true
+  return 1
 end
 
 function main(x, y, p)
