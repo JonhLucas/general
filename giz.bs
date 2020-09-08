@@ -12,19 +12,19 @@ function  default_size()
 end
 
 function ponta(x, y, r, g, b, o, w)
-  local bx = w/4
-  local by = w/2
-  local num = 3
+  local bx = (w - 5)/4
+  local by = (w - 5)/2
+  local num = 4
   for i = 1, num, 1
   do
     bs_polygon(bx, -by)
     coluna(bx, -by, by)
     bs_polygon(bx, by)
-    linha(bx, -bx, by)
+    linha(bx, -bx, by, 1)
     bs_polygon(-bx, by)
     coluna(-bx, by, -by)
     bs_polygon(-bx, -by)
-    linha(-bx, bx, -by)
+    linha(-bx, bx, -by, 1)
     bs_polygon_move(x, y)
     bs_fill(r, g, b, o/2)
   end
@@ -43,39 +43,123 @@ end
 
 function coluna(x, y1, y2)
   local plus = 2
-  local ratio = 5
+  local ratio = 10
   local ratioy = 3
   local t = y2 - y1
+  local desviox, desvioy = 0, 0
   if t < 0 then
     plus = -plus
   end
   for i = y1, y2, plus
   do
-    bs_polygon(x + math.random(-ratio, ratio), i + math.random(-ratio, ratio))
+    desviox = math.random(-ratio, 0)
+    desvioy = math.random(-ratioy, ratioy)
+    bs_polygon(x + desviox, i + desvioy)
+    if math.random(0, 1) == 1 then
+      bs_polygon(x + desviox, i - plus + desvioy)
+    end
   end
 end
 
-function linha(x1, x2, y)
+function linha(x1, x2, y, flag)
   local plus = 2
   local ratio = 5
   local ratioy = 3
   local t = x2 - x1
   local g = x1 + (t/2)
+  local u = g + plus
   if t < 0 then
     plus = -plus
   end
   for i = x1, g, plus
   do
-    bs_polygon(i + math.random(-ratio, ratio), y + math.random(-ratioy, ratioy))
+    bs_polygon(i + math.random(-ratio, ratio), y + math.random(-ratioy, 0))
   end
 
-  coluna(g, y, 0)
-  local u = g + plus
-  coluna(u, 0, y)
+  if flag == 1 then
+    coluna(g, y, 0)
+    coluna(u, 0, y)
+  else
+    u = g
+  end
 
   for i = u, x2, plus
   do
-    bs_polygon(i + math.random(-ratio, ratio), y + math.random(-ratioy, ratioy))
+    bs_polygon(i + math.random(-ratio, ratio), y + math.random(-ratioy, 0))
+  end
+end
+
+function diagonal(x1, y1, x2, y2)
+  local ax = x2 - x1
+  local ay = y2 - y1
+  local j = y1
+  local plus = 2
+  local ratio = 3
+  if ax < 0 then
+    plus = -plus
+  end
+  local a = ay / (ax/plus)
+  for i = x1, x2, plus
+  do
+    bs_polygon(i, j + math.random(-ratio, 0))
+    j = j + a
+  end
+end
+
+function draw_middle(x, y, dx, dy, r, g, b, o, basex, basey, rotation)
+  local num = 4
+  local e = 2
+  for i = 1, num, 1
+  do
+    if rotation <= -1.57 or (rotation >= 0 and rotation <= 1.57) then
+      bs_polygon(basex, -basey)
+      diagonal(basex, -basey, basex + dx, -basey + dy)
+      bs_polygon(basex + dx, -basey + dy)
+
+      linha(basex + dx, -basex + dx, -basey + dy, 0)
+
+      bs_polygon(-basex + dx, -basey + dy)
+
+      coluna(-basex + dx, -basey + dy, basey + dy)
+      
+      bs_polygon(-basex + dx, basey + dy)
+
+      diagonal(-basex + dx, basey + dy, -basex, basey)
+
+      bs_polygon(-basex, basey)
+
+      coluna(-basex, basey, -basey)
+      
+      bs_polygon(-basex, -basey)
+
+      linha(-basex, basex, -basey, 0)
+    else
+      bs_polygon(basex, -basey)
+
+      coluna(basex, -basey, basey)
+
+      bs_polygon(basex, basey)
+
+      diagonal(basex, basey, basex + dx, basey + dy)
+
+      bs_polygon(basex + dx, basey + dy)
+
+      coluna(basex + dx, basey + dy, -basey + dy)
+
+      bs_polygon(basex + dx, -basey + dy)
+      
+      linha(basex + dx, -basex + dx, -basey + dy, 0)
+
+      bs_polygon(-basex + dx, -basey + dy)
+
+      diagonal(-basex + dx, -basey + dy, -basex, -basey)
+
+      bs_polygon(-basex, -basey)
+
+      linha(-basex, basex, -basey, 0)
+    end
+    bs_polygon_move(x, y)
+    bs_fill(r, g, b, o/e)
   end
 end
 
@@ -87,8 +171,8 @@ function main(x, y, p)
   local opacity = bs_opaque() * 255 * p
 
   local base = width/2
-  local basex = width/4
-  local basey = width/2
+  local basex = (width - 5)/4
+  local basey = (width - 5)/2
 
   if not firstDraw then
     local distance = bs_distance(lastDrawX - x, lastDrawY - y)
@@ -135,46 +219,3 @@ function main(x, y, p)
   return 1
 end
 
-function draw_middle(x, y, dx, dy, r, g, b, o, basex, basey, rotation)
-  if rotation <= -1.57 or (rotation >= 0 and rotation <= 1.57) then
-    bs_polygon(basex, -basey)
-
-    bs_polygon(basex + dx, -basey + dy)
-
-    linha(basex + dx, -basex + dx, -basey + dy)
-
-    --bs_polygon(-basex + dx, -basey + dy)
-
-    coluna(-basex + dx, -basey + dy, basey + dy)
-    
-    bs_polygon(-basex + dx, basey + dy)
-
-    bs_polygon(-basex, basey)
-
-    coluna(-basex, basey, -basey)
-    
-    --bs_polygon(-basex, -basey)
-
-    linha(-basex, basex, -basey)
-  else
-    bs_polygon(basex, -basey)
-
-    coluna(basex, -basey, basey)
-
-    bs_polygon(basex, basey)
-    bs_polygon(basex + dx, basey + dy)
-
-    coluna(basex + dx, basey + dy, -basey + dy)
-
-    --bs_polygon(basex + dx, -basey + dy)
-    
-    linha(basex + dx, -basex + dx, -basey + dy)
-
-    bs_polygon(-basex + dx, -basey + dy)
-    --bs_polygon(-basex, -basey)
-
-    linha(-basex, basex, -basey)
-  end
-  bs_polygon_move(x, y)
-  bs_fill(r, g, b, o)
-end
