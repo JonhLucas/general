@@ -1,0 +1,120 @@
+lastDrawX = 0
+lastDrawY = 0
+firstDraw = true
+angle = 0
+ratio = 0
+lista = {}
+
+function set_line(r, limite)
+  local x = math.random(-r, r)
+  local y = math.random(-r, 0)
+  local a = math.random(y, r)
+  bs_polygon(x, y)
+  bs_polygon(x, a)
+  for i = 1, 4, 1
+  do
+    bs_polygon(x + math.random(0, 3), a - i * math.random(1, 3))
+  end
+  bs_polygon(x, y)
+  if limite > 0 then
+    set_line(r, limite - 1)
+  end
+  bs_polygon(x, y)
+end
+
+function draw_hexagon(w, x, y, p)
+  local base = w/2
+  bs_polygon(base, -base)
+  bs_polygon(base, base)
+  bs_polygon(-base, base)
+
+  --Draw holes
+  bs_polygon(-base, -1)
+  --draw_hole(0 , 10, base)
+  bs_polygon(-base, -1)
+
+  --Draw lines
+  bs_polygon(-base, -2)
+  set_line(base, 2, lista)
+  bs_polygon(-base, -2)
+
+  --fechar
+  bs_polygon(-base, -base)
+  bs_polygon(-base + 1, -base)
+
+
+  local dx, dy = bs_dir()
+  local rotation = bs_atan(dx, dy)
+  local r, g, b = bs_fore()
+  local opacity = bs_opaque() * 255
+
+  bs_polygon_rotate(rotation)
+
+  bs_polygon_move(x, y)
+  
+  op = math.floor(200 * p)
+  bs_fill(r, g, b, op)
+  
+  local fx = math.sqrt(2) * base * math.cos(math.pi/4 + rotation)
+  local fy = math.sqrt(2) * base * math.sin(math.pi/4 + rotation)
+
+  bs_polygon(-fx + x, -fy + y)
+  
+  bs_polygon(fy + x, -fx + y)
+  bs_polygon(fx + x, fy + y)
+
+  bs_polygon(-fy + x, fx + y)
+
+  fx = math.sqrt(2) * base * math.cos(math.pi/4 + angle)
+  fy = math.sqrt(2) * base * math.sin(math.pi/4 + angle)
+  bs_polygon(lastDrawX + fx, lastDrawY + fy)
+  bs_polygon(lastDrawX + fy, lastDrawY - fx)
+
+  bs_fill(0, 0, 0, 128)
+  --[[local cobertura = 3
+  local xd, yd = lista[1], lista[2]
+  for i = 1, 3, 1
+  do
+    bs_polygon(-cobertura, cobertura)
+    bs_polygon(cobertura, cobertura)
+    bs_polygon(cobertura, -cobertura)
+
+    bs_polygon(cobertura -1, -cobertura)
+    draw_hole(0, cobertura * 2, cobertura)
+    bs_polygon(cobertura -1, -cobertura)
+    
+    bs_polygon(-cobertura, -cobertura)
+    bs_polygon_move(xd + x - 3, yd + y - 3)
+    --bs_fill(r, g, b, op/2)
+    bs_fill(0, 0, 0, op/2)
+    cobertura = cobertura - 1
+  end]]--
+end
+
+function param1 ()
+  return "espaçamento", 1, 100, 100
+end
+
+function  default_size()
+  return   100, 0.25
+end
+
+function main(x, y, p)
+  local width = bs_width()
+  local updateDist = (width * bs_param1()) / 100
+
+  if not firstDraw then
+    local distance = bs_distance(lastDrawX - x, lastDrawY - y)
+    if distance < updateDist then
+      return 0
+    end
+  end
+  draw_hexagon(width, x, y, p)
+  local dx, dy = bs_dir()
+  local rotation = bs_atan(dx, dy)
+  angle = rotation
+  lastDrawX = x
+  lastDrawY = y
+  firstDraw = false
+  return 1
+end
