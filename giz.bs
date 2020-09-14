@@ -31,23 +31,6 @@ function ponta(x, y, r, g, b, o, w)
 end
 
 function coluna(x, y1, y2)
-  --[[local plus = 2
-  local ratio = 10
-  local ratioy = 3
-  local t = y2 - y1
-  local desviox, desvioy = 0, 0
-  if t < 0 then
-    plus = -plus
-  end
-  for i = y1, y2, plus
-  do
-    desviox = math.random(-ratio, 0)
-    desvioy = math.random(-ratioy, ratioy)
-    bs_polygon(x + desviox, i + desvioy)
-    if math.random(0, 1) == 1 then
-      bs_polygon(x + desviox, i - plus + desvioy)
-    end
-  end]]--
   local signal = 1
   local t = y2 - y1
   local  v = math.floor(t/10)
@@ -106,78 +89,91 @@ function diagonal(x1, y1, x2, y2)
   local a = ay / (ax/plus)
   for i = x1, x2, plus
   do
-    bs_polygon(i, j + math.random(-ratio, 0))
-    j = j + a
+    bs_polygon(i, j + math.random(-1, 1))
+    j = j + a + math.random(-1,1)
   end
 end
 
 function draw_middle(x, y, dx, dy, r, g, b, o, basex, basey, rotation)
   local num = 4
   local e = 2
+  local signal = 1
+  if rotation > 0 then
+    signal = -1
+  end
   for i = 1, num, 1
   do
-    if rotation <= -1.57 or (rotation >= 0 and rotation <= 1.57) then
-      bs_polygon(basex, -basey)
-      diagonal(basex, -basey, basex + dx, -basey + dy)
-      bs_polygon(basex + dx, -basey + dy)
+    if rotation <= -1.57 or (rotation > 0 and rotation <= 1.57) then
+      table.insert(lista, basex)
 
-      linha(basex + dx, -basex + dx, -basey + dy, 0)
+      bs_polygon(basex * signal, -basey * signal)
 
-      bs_polygon(-basex + dx, -basey + dy)
+      --diagonal(basex * signal, -basey * signal, basex * signal + dx, -basey * signal + dy)
 
-      coluna(-basex + dx, -basey + dy, basey + dy)
+      bs_polygon(basex * signal + dx, -basey *signal + dy)
+
+      --linha(basex + dx, -basex + dx, -basey + dy, 0)
+
+      bs_polygon(-basex * signal + dx, -basey * signal + dy)
+
+      coluna(-basex * signal + dx, -basey * signal + dy, basey * signal + dy)
       
-      bs_polygon(-basex + dx, basey + dy)
+      bs_polygon(-basex * signal + dx, basey * signal + dy)
 
-      diagonal(-basex + dx, basey + dy, -basex, basey)
+      --diagonal(-basex * signal + dx, basey * signal + dy, -basex * signal, basey * signal)
 
-      bs_polygon(-basex, basey)
+      bs_polygon(-basex * signal, basey * signal)
 
-      coluna(-basex, basey, -basey)
+      coluna(-basex * signal, basey * signal, -basey * signal)
       
-      bs_polygon(-basex, -basey)
+      bs_polygon(-basex * signal, -basey * signal)
 
-      linha(-basex, basex, -basey, 0)
+      --linha(-basex, basex, -basey, 0)
+      bs_polygon_move(x, y)
+      bs_fill(0, 255, 255, o/e)
     else
-      bs_polygon(basex, -basey)
+      table.insert(lista, basex)
+      bs_polygon(basex * signal, -basey * signal)
 
-      coluna(basex, -basey, basey)
+      coluna(basex * signal, -basey * signal, basey * signal)
 
-      bs_polygon(basex, basey)
+      bs_polygon(basex * signal, basey * signal)
 
-      diagonal(basex, basey, basex + dx, basey + dy)
+      --diagonal(basex * signal, basey * signal, basex * signal + dx, basey * signal + dy)
 
-      bs_polygon(basex + dx, basey + dy)
+      bs_polygon(basex * signal + dx, basey * signal + dy)
 
-      coluna(basex + dx, basey + dy, -basey + dy)
+      coluna(basex * signal + dx, basey * signal + dy, -basey * signal + dy)
 
-      bs_polygon(basex + dx, -basey + dy)
+      bs_polygon(basex * signal + dx, -basey * signal + dy)
       
-      linha(basex + dx, -basex + dx, -basey + dy, 0)
+      bs_polygon(-basex * signal + dx, -basey * signal + dy)
 
-      bs_polygon(-basex + dx, -basey + dy)
+      --diagonal(-basex * signal + dx, -basey * signal + dy, -basex * signal, -basey * signal)
 
-      diagonal(-basex + dx, -basey + dy, -basex, -basey)
+      bs_polygon(-basex * signal, -basey * signal)
 
-      bs_polygon(-basex, -basey)
-
-      linha(-basex, basex, -basey, 0)
+      bs_polygon_move(x, y)
+      bs_fill(255, 255, 255, o/e)
     end
-    bs_polygon_move(x, y)
-    bs_fill(r, g, b, o/e)
+    --bs_polygon_move(x, y)
+    --bs_fill(r, g, b, o/e)
   end
 end
 
+--[[
 function last(x, y, p)
   local width = bs_width()
   local basex = width/4
   local basey = width/2
   local r, g, b = bs_fore()
-  local opacity = bs_opaque() * 255 * p
-  ponta(lastDrawX, lastDrawY, r, g, b, opacity, width)
+  local opacity = bs_opaque() * 255
+  if y > lastDrawY then
+    ponta(lastDrawX, lastDrawY, r, g, b, opacity, width)
+  end
   firstDraw = true
   return 1
-end
+end]]--
 
 function main(x, y, p)
   local width = bs_width()
@@ -187,8 +183,8 @@ function main(x, y, p)
   local opacity = bs_opaque() * 255 * p
 
   local base = width/2
-  local basex = (width - 5)/4
-  local basey = (width - 5)/2
+  local basex = (width)/4
+  local basey = (width)/2
 
   if not firstDraw then
     local distance = bs_distance(lastDrawX - x, lastDrawY - y)
@@ -209,12 +205,8 @@ function main(x, y, p)
   local dx, dy = bs_dir()
   local rotation = bs_atan(dx, dy)
   local teste = rotation * angle
-  --[[
-  if rotation == 0 then
-    ponta(lastDrawX, lastDrawY,0,0,0, opacity, width)
-  end
-  ]]--
-  if teste < 0 then
+
+  --[[if teste < 0 then
     if angle > 0 and rotation < 0 then
       ponta(lastDrawX, lastDrawY, r, g, b, opacity, width)
     else
@@ -224,7 +216,7 @@ function main(x, y, p)
       angle = rotation
       return 1
     end 
-  end
+  end]]--
 
   angle = rotation
   draw_middle(x, y, ax, ay, r, g, b, opacity, basex, basey, rotation)
